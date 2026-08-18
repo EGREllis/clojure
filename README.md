@@ -1,0 +1,2 @@
+# clojure
+A clojure scratchpad
