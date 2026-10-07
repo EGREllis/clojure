@@ -1,6 +1,7 @@
 (ns atm.core
   "Documentation text here"
-  (:require [clojure.set :as s]))
+  (:require [clojure.set :as s])
+  (:gen-class))
 
 (defn cli-prompt [prompt-text] 
   (let [_ (println prompt-text)]
