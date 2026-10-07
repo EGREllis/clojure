@@ -34,8 +34,10 @@
   (loop [text prompt]
     (let [user-amount (cli-prompt text)
           matcher (re-matches #"[\d]+" user-amount)]
-      (Integer/parseInt matcher))
-    ))
+      (if (= nil (first matcher))
+        (recur text)
+        (Integer/parseInt matcher))
+    )))
 
 ;; can not change pin
 (defn update-accounts [accounts new-entry]
@@ -71,7 +73,6 @@
       )
     ))
 
-;; Complete cli-prompt-for-amount
 ;; Read and write accounts to disk? on load and terminate
 (defn -main
   [& args]
