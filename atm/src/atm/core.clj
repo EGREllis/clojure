@@ -4,7 +4,7 @@
   (:gen-class))
 
 (defn cli-prompt [prompt-text] 
-  (let [_ (println prompt-text)]
+  (let [_ (println (str prompt-text "\n"))]
     (read-line)))
 
 (defn account-for-pin [accounts pin]
@@ -43,19 +43,41 @@
     (disj (conj accounts new-entry) current-entry))
   )
 
+(defn loop-menu-option [accounts account]
+  (loop [all-accounts accounts
+         current-account account]
+    (let [option (cli-menu-option "Please enter an option between 1-4:\n\t1) Get balance\n\t2) Withdraw\n\t3) Deposit\n\t4) Exit" #"[1234]")]
+      (cond (== option 1) (let [_ (print (str (:first-name current-account) " your balance is " (:balance current-account) "\n"))]
+                            (recur all-accounts current-account))
+            (== option 2) (let [updated-account (update current-account :balance (partial + (* -1 (cli-prompt-for-amount "Please enter the amount you wish to withdraw: "))))
+                                updated-accounts (update-accounts all-accounts updated-account)]
+                            (recur updated-accounts updated-account))
+            (== option 3) (let [updated-account (update current-account :balance (partial + (cli-prompt-for-amount "Please enter the amount you wish to deposit: ")))
+                                updated-accounts (update-accounts all-accounts updated-account)]
+                            (recur updated-accounts updated-account))
+            (== option 4) (System/exit 0))
+      )
+    )
+  )
+
+(defn loop-ask-for-pin [pin, accounts]
+  (loop [next-pin pin
+         next-accounts accounts]
+    (let [next-account (cli-get-account next-accounts "Please enter your pin: ")]
+      (cond (nil? next-account) (recur next-pin next-accounts)
+            (not (nil? next-account)) (let [_ (loop-menu-option next-accounts next-account)]
+                                        (recur next-pin next-accounts))
+            )
+      )
+    ))
+
 ;; Complete cli-prompt-for-amount
-;; Use two loops? - would need a new function I think as multiple loops per function would probably be unreadable
 ;; Read and write accounts to disk? on load and terminate
 (defn -main
   [& args]
-  (loop [accounts #{{:first-name "Ashraf" :balance 1000 :pin 1234}
+  (let [accounts #{{:first-name "Ashraf" :balance 1000 :pin 1234}
                     {:first-name "Alex"   :balance 2000 :pin 4321}
                     {:first-name "Edward" :balance 0    :pin 2332}}]
-    (let [account (cli-get-account accounts "Please enter your pin: ")
-        option (cli-menu-option "Please enter an option between 1-4:\n\t1) Get balance\n\t2) Withdraw\n\t3) Deposit\n\t4) Exit\n" #"[1234]")]
-      (cond (== option 1) (print (str (:first-name account) " your balance is " (:balance account)))
-            (== option 2) (recur (update-accounts accounts (update account :balance (partial + (* -1 (cli-prompt-for-amount "Please enter the amount you wish to withdraw: "))))))
-            (== option 3) (recur (update-accounts accounts (update account :balance (partial + (cli-prompt-for-amount "Please enter the amount you wish to deposit: ")))))
-            (== option 4) (System/exit 0))
-    )))
+    (loop-ask-for-pin nil accounts)
+    ))
 
